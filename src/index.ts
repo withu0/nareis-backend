@@ -5,6 +5,8 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { connectDatabase } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
@@ -13,7 +15,14 @@ import userRoutes from './routes/user.js';
 import adminRoutes from './routes/admin.js';
 import eventsRoutes from './routes/events.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
+
+express.json({ limit: '5mb' })
+express.urlencoded({ extended: true, limit: '5mb' })
+
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -31,6 +40,10 @@ app.use((req, res, next) => {
   }
 });
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../public')));
+app.use('/uploads/avatars', express.static(path.join(__dirname, '../public/avatars')));
 
 // Health check
 app.get('/health', (req, res) => {

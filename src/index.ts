@@ -1,14 +1,17 @@
+import dotenv from 'dotenv';
+
+// Load environment variables FIRST before any other imports
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { connectDatabase } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/auth';
 import stripeRoutes from './routes/stripe';
 import userRoutes from './routes/user';
-
-// Load environment variables
-dotenv.config();
+import adminRoutes from './routes/admin';
+import eventsRoutes from './routes/events';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,7 +21,15 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
 }));
-app.use(express.json());
+
+// Stripe webhook needs raw body - apply JSON parsing to all routes EXCEPT webhook
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/stripe/webhook') {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
 app.use(express.urlencoded({ extended: true }));
 
 // Health check
@@ -30,6 +41,8 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/events', eventsRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);
@@ -41,6 +54,14 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📡 API available at http://localhost:${PORT}/api`);
+      console.log(`💳 Stripe Price IDs loaded:`, {
+        foundation: process.env.STRIPE_PRICE_ID_FOUNDATION ? '✓' : '✗',
+        growth: process.env.STRIPE_PRICE_ID_GROWTH ? '✓' : '✗',
+        stakeholder: process.env.STRIPE_PRICE_ID_STAKEHOLDER ? '✓' : '✗',
+        professional: process.env.STRIPE_PRICE_ID_PROFESSIONAL ? '✓' : '✗',
+        enterprise: process.env.STRIPE_PRICE_ID_ENTERPRISE ? '✓' : '✗',
+        founding: process.env.STRIPE_PRICE_ID_FOUNDING ? '✓' : '✗',
+      });
     });
   } catch (error) {
     console.error('Failed to start server:', error);

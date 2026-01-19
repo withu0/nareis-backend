@@ -18,12 +18,12 @@ export interface IUser extends Document {
   resetPasswordExpires?: Date;
   role: 'member' | 'admin';
   membershipTier: string;
-  subscriptionStatus: 'pending' | 'active' | 'cancelled' | 'expired';
-  membershipStatus: 'pending' | 'approved' | 'rejected';
+  membershipStatus: 'pending' | 'approved' | 'rejected' | 'active';
   approvalStatus: 'pending' | 'approved' | 'rejected';
   onboardingCompleted: boolean;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  membershipExpiresAt?: Date;
   chapterId?: string;
   interests?: string[];
   profilePictureUrl?: string;
@@ -94,14 +94,9 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: 'foundation',
     },
-    subscriptionStatus: {
-      type: String,
-      enum: ['pending', 'active', 'cancelled', 'expired'],
-      default: 'pending',
-    },
     membershipStatus: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'approved', 'rejected', 'active'],
       default: 'pending',
     },
     approvalStatus: {
@@ -118,6 +113,9 @@ const userSchema = new Schema<IUser>(
     },
     stripeSubscriptionId: {
       type: String,
+    },
+    membershipExpiresAt: {
+      type: Date,
     },
     chapterId: {
       type: String,

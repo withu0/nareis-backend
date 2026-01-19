@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { User } from '../models/User';
 import { emailService } from '../services/emailService';
 import { authMiddleware, AuthRequest } from '../middleware/authMiddleware';
@@ -53,10 +53,12 @@ router.post('/signup', async (req: Request, res: Response) => {
     }
 
     // Generate JWT token
+    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+    const signOptions: SignOptions = { expiresIn: expiresIn as any };
     const token = jwt.sign(
       { userId: user._id.toString() },
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      signOptions
     );
 
     res.status(201).json({
@@ -65,7 +67,22 @@ router.post('/signup', async (req: Request, res: Response) => {
           id: user._id.toString(),
           email: user.email,
           fullName: user.fullName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone,
+          organization: user.organization,
+          jobTitle: user.jobTitle,
           emailVerified: user.emailVerified,
+          role: user.role,
+          membershipTier: user.membershipTier,
+          membershipStatus: user.membershipStatus,
+          approvalStatus: user.approvalStatus,
+          onboardingCompleted: user.onboardingCompleted,
+          profilePictureUrl: user.profilePictureUrl,
+          chapterId: user.chapterId,
+          interests: user.interests,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         },
         token,
       },
@@ -102,10 +119,12 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 
     // Generate JWT token
+    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+    const signOptions: SignOptions = { expiresIn: expiresIn as any };
     const token = jwt.sign(
       { userId: user._id.toString() },
       process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      signOptions
     );
 
     res.json({
@@ -114,8 +133,22 @@ router.post('/login', async (req: Request, res: Response) => {
           id: user._id.toString(),
           email: user.email,
           fullName: user.fullName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phone: user.phone,
+          organization: user.organization,
+          jobTitle: user.jobTitle,
           emailVerified: user.emailVerified,
           role: user.role,
+          membershipTier: user.membershipTier,
+          membershipStatus: user.membershipStatus,
+          approvalStatus: user.approvalStatus,
+          onboardingCompleted: user.onboardingCompleted,
+          profilePictureUrl: user.profilePictureUrl,
+          chapterId: user.chapterId,
+          interests: user.interests,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         },
         token,
       },
@@ -142,10 +175,10 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
           emailVerified: user.emailVerified,
           role: user.role,
           membershipTier: user.membershipTier,
-          subscriptionStatus: user.subscriptionStatus,
           membershipStatus: user.membershipStatus,
           approvalStatus: user.approvalStatus,
           onboardingCompleted: user.onboardingCompleted,
+          membershipExpiresAt: user.membershipExpiresAt,
         },
       },
       error: null,

@@ -22,10 +22,10 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
           jobTitle: user.jobTitle,
           role: user.role,
           membershipTier: user.membershipTier,
-          subscriptionStatus: user.subscriptionStatus,
           membershipStatus: user.membershipStatus,
           approvalStatus: user.approvalStatus,
           onboardingCompleted: user.onboardingCompleted,
+          membershipExpiresAt: user.membershipExpiresAt,
           profilePictureUrl: user.profilePictureUrl,
           chapterId: user.chapterId,
           interests: user.interests,
@@ -103,7 +103,7 @@ router.get('/subscription', authMiddleware, async (req: AuthRequest, res: Respon
 
     res.json({
       data: {
-        subscriptionStatus: user.subscriptionStatus,
+        membershipStatus: user.membershipStatus,
         membershipTier: user.membershipTier,
         stripeCustomerId: user.stripeCustomerId,
         stripeSubscriptionId: user.stripeSubscriptionId,

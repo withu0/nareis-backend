@@ -1,0 +1,7 @@
+{
+  "watch": ["src", ".env"],
+  "ext": "ts,js,json,env",
+  "ignore": ["src/**/*.spec.ts", "node_modules"],
+  "exec": "tsx src/index.ts",
+  "legacyWatch": true
+}

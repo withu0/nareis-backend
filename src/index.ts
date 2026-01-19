@@ -5,13 +5,13 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
-import { connectDatabase } from './config/database';
-import { errorHandler } from './middleware/errorHandler';
-import authRoutes from './routes/auth';
-import stripeRoutes from './routes/stripe';
-import userRoutes from './routes/user';
-import adminRoutes from './routes/admin';
-import eventsRoutes from './routes/events';
+import { connectDatabase } from './config/database.js';
+import { errorHandler } from './middleware/errorHandler.js';
+import authRoutes from './routes/auth.js';
+import stripeRoutes from './routes/stripe.js';
+import userRoutes from './routes/user.js';
+import adminRoutes from './routes/admin.js';
+import eventsRoutes from './routes/events.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;

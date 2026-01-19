@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express';
 import jwt, { SignOptions } from 'jsonwebtoken';
-import { User } from '../models/User';
-import { emailService } from '../services/emailService';
-import { authMiddleware, AuthRequest } from '../middleware/authMiddleware';
+import { User } from '../models/User.js';
+import { emailService } from '../services/emailService.js';
+import { authMiddleware, AuthRequest } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 

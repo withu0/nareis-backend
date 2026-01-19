@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
-import { Event } from '../models/Event';
-import { EventRegistration } from '../models/EventRegistration';
-import { authMiddleware, AuthRequest } from '../middleware/authMiddleware';
+import { Event } from '../models/Event.js';
+import { EventRegistration } from '../models/EventRegistration.js';
+import { authMiddleware, AuthRequest } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 

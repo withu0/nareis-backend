@@ -1,7 +1,7 @@
 import express, { Response } from 'express';
-import { User } from '../models/User';
-import { PaymentHistory } from '../models/PaymentHistory';
-import { authMiddleware, AuthRequest } from '../middleware/authMiddleware';
+import { User } from '../models/User.js';
+import { PaymentHistory } from '../models/PaymentHistory.js';
+import { authMiddleware, AuthRequest } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 

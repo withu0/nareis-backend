@@ -157,6 +157,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: R
             user.membershipStatus = 'active'; // Set membership status to active after successful payment
             user.membershipTier = session.metadata?.tier || user.membershipTier;
             user.onboardingCompleted = true; // Mark onboarding as complete
+            user.approvalStatus = 'approved'; // Auto-approve when payment succeeds
             
             // Set membership expiration to 1 year from now
             const expirationDate = new Date();
@@ -326,7 +327,8 @@ router.post('/verify-payment', authMiddleware, async (req: AuthRequest, res: Res
     user.membershipStatus = 'active'; // Set membership status to active after successful payment
     user.membershipTier = tier || session.metadata?.tier || user.membershipTier;
     user.stripeCustomerId = session.customer as string;
-    user.onboardingCompleted = true; 
+    user.onboardingCompleted = true;
+    user.approvalStatus = 'approved'; // Auto-approve when payment succeeds
     
     // Set membership expiration to 1 year from now
     const expirationDate = new Date();

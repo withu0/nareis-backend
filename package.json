@@ -11,6 +11,7 @@
     "lint": "eslint src --ext .ts",
     "init-db": "tsx src/scripts/initDatabase.ts",
     "verify-db": "tsx src/scripts/verifyDatabase.ts",
+    "seed-admin": "tsx src/scripts/seedAdmin.ts",
     "pm2:start": "pm2 start ecosystem.config.cjs --env production",
     "pm2:stop": "pm2 stop nareis-backend",
     "pm2:restart": "pm2 restart nareis-backend",

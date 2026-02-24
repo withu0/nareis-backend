@@ -172,7 +172,7 @@ userSchema.methods.generateResetToken = function (): string {
 };
 
 // Indexes
-// Note: email index is automatically created by unique: true, so we don't need to add it explicitly
+userSchema.index({ email: 1 });
 userSchema.index({ verificationToken: 1 });
 userSchema.index({ resetPasswordToken: 1 });
 

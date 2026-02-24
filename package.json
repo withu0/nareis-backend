@@ -10,7 +10,13 @@
     "start": "node dist/index.js",
     "lint": "eslint src --ext .ts",
     "init-db": "tsx src/scripts/initDatabase.ts",
-    "verify-db": "tsx src/scripts/verifyDatabase.ts"
+    "verify-db": "tsx src/scripts/verifyDatabase.ts",
+    "pm2:start": "pm2 start ecosystem.config.cjs --env production",
+    "pm2:stop": "pm2 stop nareis-backend",
+    "pm2:restart": "pm2 restart nareis-backend",
+    "pm2:delete": "pm2 delete nareis-backend",
+    "pm2:logs": "pm2 logs nareis-backend",
+    "pm2:monit": "pm2 monit"
   },
   "keywords": [],
   "author": "",

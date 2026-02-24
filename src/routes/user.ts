@@ -2,6 +2,7 @@ import express, { Response } from 'express';
 import { User } from '../models/User.js';
 import { PaymentHistory } from '../models/PaymentHistory.js';
 import { authMiddleware, AuthRequest } from '../middleware/authMiddleware.js';
+import { upload } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -42,7 +43,7 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
 });
 
 // Update user profile
-router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/profile', authMiddleware, upload.single('avatar'), async (req: AuthRequest, res: Response) => {
   try {
     const user = req.user!;
     const updates = req.body;
@@ -65,6 +66,12 @@ router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
         (user as any)[field] = updates[field];
       }
     });
+
+    // If a new avatar was uploaded, update the URL
+    if (req.file) {
+      // Store relative path instead of full URL for portability
+      user.profilePictureUrl = `/uploads/avatars/${req.file.filename}`;
+    }
 
     await user.save();
 

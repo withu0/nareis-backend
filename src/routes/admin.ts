@@ -1,6 +1,7 @@
 import express, { Response } from 'express';
 import { User } from '../models/User.js';
 import { authMiddleware, AuthRequest } from '../middleware/authMiddleware.js';
+import { upload } from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
@@ -128,7 +129,7 @@ router.get('/users', async (req: AuthRequest, res: Response) => {
 });
 
 // Create new user
-router.post('/users', async (req: AuthRequest, res: Response) => {
+router.post('/users', upload.single('avatar'), async (req: AuthRequest, res: Response) => {
   try {
     const {
       email,
@@ -160,6 +161,13 @@ router.post('/users', async (req: AuthRequest, res: Response) => {
       return;
     }
 
+    // Get avatar URL if file was uploaded
+    let profilePictureUrl: string | undefined;
+    if (req.file) {
+      // Store relative path instead of full URL for portability
+      profilePictureUrl = `/uploads/avatars/${req.file.filename}`;
+    }
+
     // Create new user
     const user = new User({
       email: email.toLowerCase(),
@@ -174,8 +182,9 @@ router.post('/users', async (req: AuthRequest, res: Response) => {
       membershipTier: membershipTier || 'foundation',
       membershipStatus: membershipStatus || 'pending',
       approvalStatus: approvalStatus || 'pending',
-      onboardingCompleted: onboardingCompleted || false,
-      emailVerified: emailVerified || false,
+      onboardingCompleted: onboardingCompleted === 'true' || onboardingCompleted === true,
+      emailVerified: emailVerified === 'true' || emailVerified === true,
+      profilePictureUrl,
     });
 
     await user.save();
@@ -197,6 +206,7 @@ router.post('/users', async (req: AuthRequest, res: Response) => {
           approvalStatus: user.approvalStatus,
           onboardingCompleted: user.onboardingCompleted,
           emailVerified: user.emailVerified,
+          profilePictureUrl: user.profilePictureUrl,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         },
@@ -254,7 +264,7 @@ router.get('/users/:id', async (req: AuthRequest, res: Response) => {
 });
 
 // Update user
-router.put('/users/:id', async (req: AuthRequest, res: Response) => {
+router.put('/users/:id', upload.single('avatar'), async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.params.id);
     
@@ -284,9 +294,20 @@ router.put('/users/:id', async (req: AuthRequest, res: Response) => {
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        (user as any)[field] = req.body[field];
+        // Handle boolean fields that come as strings from FormData
+        if (field === 'onboardingCompleted' || field === 'emailVerified') {
+          (user as any)[field] = req.body[field] === 'true' || req.body[field] === true;
+        } else {
+          (user as any)[field] = req.body[field];
+        }
       }
     });
+
+    // If a new avatar was uploaded, update the URL
+    if (req.file) {
+      // Store relative path instead of full URL for portability
+      user.profilePictureUrl = `/uploads/avatars/${req.file.filename}`;
+    }
 
     await user.save();
 
@@ -299,6 +320,7 @@ router.put('/users/:id', async (req: AuthRequest, res: Response) => {
           role: user.role,
           membershipTier: user.membershipTier,
           approvalStatus: user.approvalStatus,
+          profilePictureUrl: user.profilePictureUrl,
         },
       },
       error: null,

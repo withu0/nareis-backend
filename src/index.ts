@@ -29,9 +29,6 @@ import statisticsRoutes from './routes/statistics.js';
 
 const app = express();
 
-express.json({ limit: '5mb' })
-express.urlencoded({ extended: true, limit: '5mb' })
-
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -80,16 +77,31 @@ const startServer = async () => {
   try {
     await connectDatabase();
     const server = app.listen(PORT, () => {
-      console.log(`=? Server running on port ${PORT}`);
-      console.log(`=? API available at http://localhost:${PORT}/api`);
-      console.log(`=? Stripe Price IDs loaded:`, {
-        foundation: process.env.STRIPE_PRICE_ID_FOUNDATION ? '' : '',
-        growth: process.env.STRIPE_PRICE_ID_GROWTH ? '' : '',
-        stakeholder: process.env.STRIPE_PRICE_ID_STAKEHOLDER ? '' : '',
-        professional: process.env.STRIPE_PRICE_ID_PROFESSIONAL ? '' : '',
-        enterprise: process.env.STRIPE_PRICE_ID_ENTERPRISE ? '' : '',
-        founding: process.env.STRIPE_PRICE_ID_FOUNDING ? '' : '',
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📡 API available at http://localhost:${PORT}/api`);
+      console.log(`💳 Stripe Price IDs loaded:`, {
+        foundation: process.env.STRIPE_PRICE_ID_FOUNDATION ? '✓' : '✗',
+        growth: process.env.STRIPE_PRICE_ID_GROWTH ? '✓' : '✗',
+        stakeholder: process.env.STRIPE_PRICE_ID_STAKEHOLDER ? '✓' : '✗',
+        professional: process.env.STRIPE_PRICE_ID_PROFESSIONAL ? '✓' : '✗',
+        enterprise: process.env.STRIPE_PRICE_ID_ENTERPRISE ? '✓' : '✗',
+        founding: process.env.STRIPE_PRICE_ID_FOUNDING ? '✓' : '✗',
       });
+      
+      // Warn if Stripe Price IDs are missing
+      const missingPrices = Object.entries({
+        foundation: process.env.STRIPE_PRICE_ID_FOUNDATION,
+        growth: process.env.STRIPE_PRICE_ID_GROWTH,
+        stakeholder: process.env.STRIPE_PRICE_ID_STAKEHOLDER,
+        professional: process.env.STRIPE_PRICE_ID_PROFESSIONAL,
+        enterprise: process.env.STRIPE_PRICE_ID_ENTERPRISE,
+        founding: process.env.STRIPE_PRICE_ID_FOUNDING,
+      }).filter(([_, value]) => !value).map(([key]) => key);
+      
+      if (missingPrices.length > 0) {
+        console.warn(`⚠️  Warning: Missing Stripe Price IDs for: ${missingPrices.join(', ')}`);
+        console.warn(`   Please set these in your .env file to enable payment processing.`);
+      }
     });
 
     // Handle server errors (e.g., port already in use)

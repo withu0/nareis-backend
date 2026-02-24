@@ -1,12 +1,23 @@
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables FIRST before any other imports
-dotenv.config();
+// Use explicit path to .env file in project root (two levels up from src/index.ts)
+const envPath = path.join(__dirname, '../.env');
+const result = dotenv.config({ path: envPath });
+if (result.error) {
+  console.warn(`⚠️  Warning: Could not load .env file from ${envPath}:`, result.error.message);
+} else {
+  console.log(`✅ Loaded .env file from: ${envPath}`);
+}
 
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { connectDatabase } from './config/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/auth.js';
@@ -15,9 +26,6 @@ import userRoutes from './routes/user.js';
 import adminRoutes from './routes/admin.js';
 import eventsRoutes from './routes/events.js';
 import statisticsRoutes from './routes/statistics.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 

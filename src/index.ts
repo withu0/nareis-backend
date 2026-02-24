@@ -29,8 +29,8 @@ import statisticsRoutes from './routes/statistics.js';
 
 const app = express();
 
-express.json({ limit: '5mb' })
-express.urlencoded({ extended: true, limit: '5mb' })
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 const PORT = process.env.PORT || 5000;
 

@@ -172,7 +172,7 @@ userSchema.methods.generateResetToken = function (): string {
 };
 
 // Indexes
-userSchema.index({ email: 1 });
+//userSchema.index({ email: 1 });
 userSchema.index({ verificationToken: 1 });
 userSchema.index({ resetPasswordToken: 1 });
 

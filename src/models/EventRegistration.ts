@@ -163,7 +163,7 @@ eventRegistrationSchema.methods.generateConfirmationCode = function() {
 eventRegistrationSchema.index({ eventId: 1 });
 eventRegistrationSchema.index({ userId: 1 });
 eventRegistrationSchema.index({ eventId: 1, userId: 1 }, { unique: true }); // Prevent duplicate registrations
-eventRegistrationSchema.index({ confirmationCode: 1 }, { unique: true });
+// eventRegistrationSchema.index({ confirmationCode: 1 }, { unique: true });
 eventRegistrationSchema.index({ status: 1 });
 eventRegistrationSchema.index({ paymentStatus: 1 });
 eventRegistrationSchema.index({ checkedIn: 1 });

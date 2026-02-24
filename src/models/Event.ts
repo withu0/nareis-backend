@@ -145,7 +145,7 @@ eventSchema.index({ startDate: 1 });
 eventSchema.index({ status: 1 });
 eventSchema.index({ organizerId: 1 });
 eventSchema.index({ eventType: 1 });
-eventSchema.index({ slug: 1 });
+// eventSchema.index({ slug: 1 });
 eventSchema.index({ tags: 1 });
 eventSchema.index({ isFree: 1 });
 eventSchema.index({ memberOnly: 1 });

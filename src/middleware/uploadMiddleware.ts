@@ -2,6 +2,7 @@ import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Request } from 'express';
+import fs from 'fs';
 
 // Type for multer file
 type MulterFile = Express.Multer.File;
@@ -13,6 +14,8 @@ const __dirname = path.dirname(__filename);
 const avatarStorage = multer.diskStorage({
   destination: (req: Request, file: MulterFile, cb: (error: Error | null, destination: string) => void) => {
     const uploadPath = path.join(__dirname, '../../public/avatars');
+    // Ensure directory exists (create if it doesn't)
+    fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
   filename: (req: Request, file: MulterFile, cb: (error: Error | null, filename: string) => void) => {
@@ -27,6 +30,8 @@ const avatarStorage = multer.diskStorage({
 const eventImageStorage = multer.diskStorage({
   destination: (req: Request, file: MulterFile, cb: (error: Error | null, destination: string) => void) => {
     const uploadPath = path.join(__dirname, '../../public/events');
+    // Ensure directory exists (create if it doesn't)
+    fs.mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
   },
   filename: (req: Request, file: MulterFile, cb: (error: Error | null, filename: string) => void) => {

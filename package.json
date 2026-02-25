@@ -11,7 +11,7 @@
     "lint": "eslint src --ext .ts",
     "init-db": "tsx src/scripts/initDatabase.ts",
     "verify-db": "tsx src/scripts/verifyDatabase.ts",
-    "seed-admin": "tsx src/scripts/seedAdmin.ts"
+    "seed-admin": "tsx src/scripts/seedAdmin.ts" 
   },
   "keywords": [],
   "author": "",

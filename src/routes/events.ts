@@ -171,8 +171,8 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Create event (admin only)
-router.post('/', authMiddleware, adminMiddleware, uploadEventImage.single('image'), async (req: AuthRequest, res: Response) => {
+// Create event (authenticated users)
+router.post('/', authMiddleware, uploadEventImage.single('image'), async (req: AuthRequest, res: Response) => {
   try {
     console.log('\n========== EVENT CREATION REQUEST ==========');
     console.log('📝 Request Headers:', {

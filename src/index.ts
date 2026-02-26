@@ -26,6 +26,7 @@ import userRoutes from './routes/user.js';
 import adminRoutes from './routes/admin.js';
 import eventsRoutes from './routes/events.js';
 import statisticsRoutes from './routes/statistics.js';
+import membersRoutes from './routes/members.js';
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/statistics', statisticsRoutes);
+app.use('/api/members', membersRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

@@ -27,6 +27,12 @@ export interface IUser extends Document {
   chapterId?: string;
   interests?: string[];
   profilePictureUrl?: string;
+  state?: string;
+  city?: string;
+  industry?: string;
+  bio?: string;
+  website?: string;
+  linkedin?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -125,6 +131,24 @@ const userSchema = new Schema<IUser>(
       default: [],
     },
     profilePictureUrl: {
+      type: String,
+    },
+    state: {
+      type: String,
+    },
+    city: {
+      type: String,
+    },
+    industry: {
+      type: String,
+    },
+    bio: {
+      type: String,
+    },
+    website: {
+      type: String,
+    },
+    linkedin: {
       type: String,
     },
   },

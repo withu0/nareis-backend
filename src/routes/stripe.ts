@@ -41,11 +41,32 @@ const getTierPrices = () => ({
   },
 });
 
+const tierNames: Record<string, string> = {
+  foundation: 'Foundation Member',
+  growth: 'Growth Member',
+  stakeholder: 'Service Partner Member',
+  professional: 'Professional Member',
+  enterprise: 'Enterprise Member',
+  founding: 'Founding Lifetime Member',
+};
+
+// Get tier list for frontend (id, name, amount)
+router.get('/tiers', (_req, res: Response) => {
+  const tierPrices = getTierPrices();
+  const tiers = Object.entries(tierPrices).map(([id, info]) => ({
+    id,
+    name: tierNames[id] || id,
+    amount: info.amount,
+    isRecurring: info.isRecurring,
+  }));
+  res.json({ data: tiers, error: null });
+});
+
 // Create checkout session
 router.post('/create-checkout-session', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = req.user!;
-    const { tier, successUrl, cancelUrl } = req.body;
+    const { tier, successUrl, cancelUrl, promotionCode } = req.body;
 
     if (!tier) {
       res.status(400).json({ error: 'Tier is required' });
@@ -91,6 +112,24 @@ router.post('/create-checkout-session', authMiddleware, async (req: AuthRequest,
       await user.save();
     }
 
+    // Optional: resolve promotion code to pre-apply discount
+    let discounts: { promotion_code?: string }[] | undefined;
+    if (promotionCode && typeof promotionCode === 'string' && promotionCode.trim()) {
+      const code = promotionCode.trim();
+      try {
+        const promoCodes = await stripe.promotionCodes.list({
+          code: code,
+          active: true,
+          limit: 1,
+        });
+        if (promoCodes.data.length > 0) {
+          discounts = [{ promotion_code: promoCodes.data[0].id }];
+        }
+      } catch (promoErr) {
+        console.warn('Promotion code lookup failed:', promoErr);
+      }
+    }
+
     // Create checkout session
     const sessionParams: any = {
       customer: customerId,
@@ -108,6 +147,8 @@ router.post('/create-checkout-session', authMiddleware, async (req: AuthRequest,
         userId: user._id.toString(),
         tier,
       },
+      allow_promotion_codes: true,
+      ...(discounts && discounts.length > 0 ? { discounts } : {}),
     };
 
     const session = await stripe.checkout.sessions.create(sessionParams);
@@ -307,8 +348,10 @@ router.post('/verify-payment', authMiddleware, async (req: AuthRequest, res: Res
 
     console.log(`[VERIFY PAYMENT] Session status: ${session.payment_status}, Amount: ${session.amount_total}`);
 
-    // Check if payment was successful
-    if (session.payment_status !== 'paid') {
+    // Check if payment was successful (paid or free with 100% coupon / no_payment_required)
+    const isPaid = session.payment_status === 'paid';
+    const isFree = session.payment_status === 'no_payment_required' && (session.amount_total === 0 || session.amount_total === null);
+    if (!isPaid && !isFree) {
       res.status(400).json({ 
         error: 'Payment not completed',
         data: { paymentStatus: session.payment_status }

@@ -114,6 +114,7 @@ router.get('/subscription', authMiddleware, async (req: AuthRequest, res: Respon
         membershipTier: user.membershipTier,
         stripeCustomerId: user.stripeCustomerId,
         stripeSubscriptionId: user.stripeSubscriptionId,
+        membershipExpiresAt: user.membershipExpiresAt,
         paymentHistory: paymentHistory.map((payment) => ({
           id: payment._id.toString(),
           amount: payment.amount,
@@ -127,6 +128,60 @@ router.get('/subscription', authMiddleware, async (req: AuthRequest, res: Respon
   } catch (error: any) {
     console.error('Get subscription error:', error);
     res.status(500).json({ error: error.message || 'Failed to get subscription' });
+  }
+});
+
+// Request downgrade: update user's membership tier (takes effect immediately for one-time membership)
+router.put('/subscription', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    const { tier } = req.body;
+    const validTiers = ['foundation', 'growth', 'stakeholder', 'professional', 'enterprise', 'founding'];
+    if (!tier || !validTiers.includes(tier)) {
+      res.status(400).json({ error: 'Valid tier is required' });
+      return;
+    }
+    user.membershipTier = tier;
+    await user.save();
+    res.json({
+      data: { membershipTier: user.membershipTier },
+      error: null,
+    });
+  } catch (error: any) {
+    console.error('Request downgrade error:', error);
+    res.status(500).json({ error: error.message || 'Failed to update subscription' });
+  }
+});
+
+// Cancel subscription (set status to canceling; access until membershipExpiresAt)
+router.post('/subscription/cancel', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    user.membershipStatus = 'canceling';
+    await user.save();
+    res.json({
+      data: { membershipStatus: user.membershipStatus },
+      error: null,
+    });
+  } catch (error: any) {
+    console.error('Cancel subscription error:', error);
+    res.status(500).json({ error: error.message || 'Failed to cancel subscription' });
+  }
+});
+
+// Reactivate subscription (clear canceling, set active)
+router.post('/subscription/reactivate', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = req.user!;
+    user.membershipStatus = 'active';
+    await user.save();
+    res.json({
+      data: { membershipStatus: user.membershipStatus },
+      error: null,
+    });
+  } catch (error: any) {
+    console.error('Reactivate subscription error:', error);
+    res.status(500).json({ error: error.message || 'Failed to reactivate subscription' });
   }
 });
 

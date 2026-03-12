@@ -2,6 +2,7 @@ import express, { Response } from 'express';
 import { User } from '../models/User.js';
 import { authMiddleware, AuthRequest } from '../middleware/authMiddleware.js';
 import { upload } from '../middleware/uploadMiddleware.js';
+import { stripe } from '../config/stripe.js';
 
 const router = express.Router();
 
@@ -420,6 +421,143 @@ router.put('/users/:id/reject', async (req: AuthRequest, res: Response) => {
   } catch (error: any) {
     console.error('Reject user error:', error);
     res.status(500).json({ error: error.message || 'Failed to reject user' });
+  }
+});
+
+// --- Coupon management (Stripe as source of truth) ---
+
+router.get('/coupons', async (_req: AuthRequest, res: Response) => {
+  try {
+    const coupons = await stripe.coupons.list({ limit: 100 });
+    res.json({
+      data: coupons.data.map((c) => ({
+        id: c.id,
+        name: c.name,
+        percentOff: c.percent_off,
+        amountOff: c.amount_off,
+        currency: c.currency,
+        duration: c.duration,
+        durationInMonths: c.duration_in_months,
+        maxRedemptions: c.max_redemptions,
+        redeemBy: c.redeem_by,
+        timesRedeemed: c.times_redeemed,
+        valid: c.valid,
+      })),
+      error: null,
+    });
+  } catch (error: any) {
+    console.error('List coupons error:', error);
+    res.status(500).json({ error: error.message || 'Failed to list coupons' });
+  }
+});
+
+router.post('/coupons', async (req: AuthRequest, res: Response) => {
+  try {
+    const { percentOff, amountOff, currency, duration, durationInMonths, name, maxRedemptions, redeemBy } = req.body;
+    if ((percentOff == null && amountOff == null) || !duration) {
+      res.status(400).json({ error: 'percentOff or amountOff, and duration are required' });
+      return;
+    }
+    const params: any = {
+      duration: duration === 'repeating' && durationInMonths ? 'repeating' : duration === 'forever' ? 'forever' : 'once',
+    };
+    if (percentOff != null) params.percent_off = Math.min(100, Math.max(0, Number(percentOff)));
+    if (amountOff != null) {
+      params.amount_off = Math.round(Number(amountOff));
+      if (currency) params.currency = currency;
+    }
+    if (duration === 'repeating' && durationInMonths) params.duration_in_months = durationInMonths;
+    if (name) params.name = name;
+    if (maxRedemptions != null) params.max_redemptions = Number(maxRedemptions);
+    if (redeemBy != null) params.redeem_by = Math.floor(Number(new Date(redeemBy).getTime() / 1000));
+    const coupon = await stripe.coupons.create(params);
+    res.json({
+      data: {
+        id: coupon.id,
+        name: coupon.name,
+        percentOff: coupon.percent_off,
+        amountOff: coupon.amount_off,
+        currency: coupon.currency,
+        duration: coupon.duration,
+        valid: coupon.valid,
+      },
+      error: null,
+    });
+  } catch (error: any) {
+    console.error('Create coupon error:', error);
+    res.status(500).json({ error: error.message || 'Failed to create coupon' });
+  }
+});
+
+router.post('/coupons/:couponId/promotion-codes', async (req: AuthRequest, res: Response) => {
+  try {
+    const { couponId } = req.params;
+    const { code, maxRedemptions, expiresAt } = req.body;
+    if (!code || typeof code !== 'string' || !code.trim()) {
+      res.status(400).json({ error: 'code is required' });
+      return;
+    }
+    const params: any = { coupon: couponId, code: code.trim() };
+    if (maxRedemptions != null) params.max_redemptions = Number(maxRedemptions);
+    if (expiresAt != null) params.expires_at = Math.floor(Number(new Date(expiresAt).getTime() / 1000));
+    const promotionCode = await stripe.promotionCodes.create(params);
+    res.json({
+      data: {
+        id: promotionCode.id,
+        code: promotionCode.code,
+        coupon: promotionCode.coupon,
+        active: promotionCode.active,
+        expiresAt: promotionCode.expires_at,
+        maxRedemptions: promotionCode.max_redemptions,
+        timesRedeemed: promotionCode.times_redeemed,
+      },
+      error: null,
+    });
+  } catch (error: any) {
+    console.error('Create promotion code error:', error);
+    res.status(500).json({ error: error.message || 'Failed to create promotion code' });
+  }
+});
+
+router.get('/promotion-codes', async (req: AuthRequest, res: Response) => {
+  try {
+    const { coupon: couponId } = req.query;
+    const listParams: any = { limit: 100 };
+    if (couponId && typeof couponId === 'string') listParams.coupon = couponId;
+    const promotionCodes = await stripe.promotionCodes.list(listParams);
+    res.json({
+      data: promotionCodes.data.map((p) => ({
+        id: p.id,
+        code: p.code,
+        coupon: typeof p.coupon === 'object' ? (p.coupon as any).id : p.coupon,
+        active: p.active,
+        expiresAt: p.expires_at,
+        maxRedemptions: p.max_redemptions,
+        timesRedeemed: p.times_redeemed,
+      })),
+      error: null,
+    });
+  } catch (error: any) {
+    console.error('List promotion codes error:', error);
+    res.status(500).json({ error: error.message || 'Failed to list promotion codes' });
+  }
+});
+
+router.patch('/promotion-codes/:id', async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const promotionCode = await stripe.promotionCodes.update(id, { active: false });
+    res.json({
+      data: {
+        id: promotionCode.id,
+        code: promotionCode.code,
+        active: promotionCode.active,
+      },
+      error: null,
+    });
+  } catch (error: any) {
+    console.error('Deactivate promotion code error:', error);
+    res.status(500).json({ error: error.message || 'Failed to deactivate promotion code' });
   }
 });
 

@@ -18,7 +18,7 @@ export interface IUser extends Document {
   resetPasswordExpires?: Date;
   role: 'member' | 'admin';
   membershipTier: string;
-  membershipStatus: 'pending' | 'approved' | 'rejected' | 'active';
+  membershipStatus: 'pending' | 'approved' | 'rejected' | 'active' | 'canceling';
   approvalStatus: 'pending' | 'approved' | 'rejected';
   onboardingCompleted: boolean;
   stripeCustomerId?: string;
@@ -102,7 +102,7 @@ const userSchema = new Schema<IUser>(
     },
     membershipStatus: {
       type: String,
-      enum: ['pending', 'approved', 'rejected', 'active'],
+      enum: ['pending', 'approved', 'rejected', 'active', 'canceling'],
       default: 'pending',
     },
     approvalStatus: {

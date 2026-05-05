@@ -27,6 +27,8 @@ import adminRoutes from './routes/admin.js';
 import eventsRoutes from './routes/events.js';
 import statisticsRoutes from './routes/statistics.js';
 import membersRoutes from './routes/members.js';
+import marketingRoutes from './routes/marketing.js';
+import adminPropertyListingsRoutes from './routes/adminPropertyListings.js';
 
 const app = express();
 
@@ -55,6 +57,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../public')));
 app.use('/uploads/avatars', express.static(path.join(__dirname, '../public/avatars')));
 app.use('/uploads/events', express.static(path.join(__dirname, '../public/events')));
+app.use('/uploads/marketing', express.static(path.join(__dirname, '../public/marketing')));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -70,9 +73,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/property-listings', adminPropertyListingsRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/members', membersRoutes);
+app.use('/api/marketing', marketingRoutes);
 
 // Error handler (must be last)
 app.use(errorHandler);

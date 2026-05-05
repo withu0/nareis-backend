@@ -3,6 +3,7 @@ import { User } from '../models/User.js';
 import { PaymentHistory } from '../models/PaymentHistory.js';
 import { authMiddleware, AuthRequest } from '../middleware/authMiddleware.js';
 import { upload } from '../middleware/uploadMiddleware.js';
+import { stripe } from '../config/stripe.js';
 
 const router = express.Router();
 
@@ -153,10 +154,15 @@ router.put('/subscription', authMiddleware, async (req: AuthRequest, res: Respon
   }
 });
 
-// Cancel subscription (set status to canceling; access until membershipExpiresAt)
+// Cancel subscription (set cancel_at_period_end in Stripe; access until membershipExpiresAt)
 router.post('/subscription/cancel', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = req.user!;
+    if (!user.stripeSubscriptionId) {
+      res.status(400).json({ error: 'No active subscription' });
+      return;
+    }
+    await stripe.subscriptions.update(user.stripeSubscriptionId, { cancel_at_period_end: true });
     user.membershipStatus = 'canceling';
     await user.save();
     res.json({
@@ -169,10 +175,15 @@ router.post('/subscription/cancel', authMiddleware, async (req: AuthRequest, res
   }
 });
 
-// Reactivate subscription (clear canceling, set active)
+// Reactivate subscription (clear cancel_at_period_end in Stripe, set active)
 router.post('/subscription/reactivate', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = req.user!;
+    if (!user.stripeSubscriptionId) {
+      res.status(400).json({ error: 'No active subscription' });
+      return;
+    }
+    await stripe.subscriptions.update(user.stripeSubscriptionId, { cancel_at_period_end: false });
     user.membershipStatus = 'active';
     await user.save();
     res.json({

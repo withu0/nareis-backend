@@ -6,38 +6,38 @@ import { authMiddleware, AuthRequest } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Price IDs mapping from environment variables - All one-time payments
+// Price IDs mapping from environment variables - All 1-year recurring subscriptions
 // Using a function to ensure environment variables are read at runtime, not module load time
 const getTierPrices = () => ({
   foundation: { 
     priceId: process.env.STRIPE_PRICE_ID_FOUNDATION || '', 
     amount: 495, 
-    isRecurring: false 
+    isRecurring: true 
   },
   growth: { 
     priceId: process.env.STRIPE_PRICE_ID_GROWTH || '', 
     amount: 995, 
-    isRecurring: false 
+    isRecurring: true 
   },
   stakeholder: { 
     priceId: process.env.STRIPE_PRICE_ID_STAKEHOLDER || '', 
     amount: 1495, 
-    isRecurring: false 
+    isRecurring: true 
   },
   professional: { 
     priceId: process.env.STRIPE_PRICE_ID_PROFESSIONAL || '', 
     amount: 1995, 
-    isRecurring: false 
+    isRecurring: true 
   },
   enterprise: { 
     priceId: process.env.STRIPE_PRICE_ID_ENTERPRISE || '', 
     amount: 3995, 
-    isRecurring: false 
+    isRecurring: true 
   },
   founding: { 
     priceId: process.env.STRIPE_PRICE_ID_FOUNDING || '', 
     amount: 5995, 
-    isRecurring: false 
+    isRecurring: true 
   },
 });
 
@@ -199,14 +199,21 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: R
             user.membershipTier = session.metadata?.tier || user.membershipTier;
             user.onboardingCompleted = true; // Mark onboarding as complete
             user.approvalStatus = 'approved'; // Auto-approve when payment succeeds
-            
-            // Set membership expiration to 1 year from now
-            const expirationDate = new Date();
-            expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-            user.membershipExpiresAt = expirationDate;
-            
+
             if (session.subscription) {
               user.stripeSubscriptionId = session.subscription;
+              try {
+                const subscription = await stripe.subscriptions.retrieve(session.subscription);
+                user.membershipExpiresAt = new Date(subscription.current_period_end * 1000);
+              } catch (err) {
+                const expirationDate = new Date();
+                expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+                user.membershipExpiresAt = expirationDate;
+              }
+            } else {
+              const expirationDate = new Date();
+              expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+              user.membershipExpiresAt = expirationDate;
             }
             await user.save();
 
@@ -258,7 +265,14 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: R
         const subscription = event.data.object as any;
         const user = await User.findOne({ stripeSubscriptionId: subscription.id });
         if (user) {
-          user.membershipStatus = subscription.status === 'active' ? 'active' : 'pending';
+          user.membershipStatus = subscription.cancel_at_period_end
+            ? 'canceling'
+            : subscription.status === 'active'
+              ? 'active'
+              : 'pending';
+          if (subscription.current_period_end) {
+            user.membershipExpiresAt = new Date(subscription.current_period_end * 1000);
+          }
           await user.save();
         }
         break;
@@ -372,15 +386,21 @@ router.post('/verify-payment', authMiddleware, async (req: AuthRequest, res: Res
     user.stripeCustomerId = session.customer as string;
     user.onboardingCompleted = true;
     user.approvalStatus = 'approved'; // Auto-approve when payment succeeds
-    
-    // Set membership expiration to 1 year from now
-    const expirationDate = new Date();
-    expirationDate.setFullYear(expirationDate.getFullYear() + 1);
-    user.membershipExpiresAt = expirationDate;
-    
-    // For one-time payments, payment_intent is used; for subscriptions, subscription is used
+
     if (session.subscription) {
       user.stripeSubscriptionId = session.subscription as string;
+      try {
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+        user.membershipExpiresAt = new Date(subscription.current_period_end * 1000);
+      } catch (err) {
+        const expirationDate = new Date();
+        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+        user.membershipExpiresAt = expirationDate;
+      }
+    } else {
+      const expirationDate = new Date();
+      expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+      user.membershipExpiresAt = expirationDate;
     }
 
     await user.save();

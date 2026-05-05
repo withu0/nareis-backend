@@ -69,3 +69,26 @@ export const uploadEventImage = multer({
     fileSize: 10 * 1024 * 1024 // 10MB max file size for events
   }
 });
+
+// Property marketing listing images
+const marketingImageStorage = multer.diskStorage({
+  destination: (req: Request, file: MulterFile, cb: (error: Error | null, destination: string) => void) => {
+    const uploadPath = path.join(__dirname, '../../public/marketing');
+    fs.mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: (req: Request, file: MulterFile, cb: (error: Error | null, filename: string) => void) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    const nameWithoutExt = path.basename(file.originalname, ext);
+    cb(null, `listing-${nameWithoutExt}-${uniqueSuffix}${ext}`);
+  },
+});
+
+export const uploadMarketingImages = multer({
+  storage: marketingImageStorage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+});

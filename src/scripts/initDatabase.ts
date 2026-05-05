@@ -21,6 +21,8 @@ import '../models/EventRegistration.js';
 import '../models/EventWaitlist.js';
 import '../models/EventFeedback.js';
 import '../models/PaymentHistory.js';
+import '../models/PropertyListing.js';
+import '../models/PropertyListingInterest.js';
 
 dotenv.config();
 
